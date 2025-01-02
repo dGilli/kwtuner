@@ -11,6 +11,7 @@ import (
 
 func init() {
     services.RegisterService("openai", services.NewOpenAIService(""))
+    services.RegisterService("anthropic", services.NewAnthropicService(""))
 }
 
 func main() {

@@ -38,6 +38,9 @@ func HandleGenerateIndex(w http.ResponseWriter, r *http.Request) error {
     if req.APIKey != "" && req.Service == "openai" {
         service = services.NewOpenAIService(req.APIKey)
     }
+    if req.APIKey != "" && req.Service == "anthropic" {
+        service = services.NewAnthropicService(req.APIKey)
+    }
 
     generatedText, err := service.GenerateText(req.Keywords, req.Text)
     if err != nil {
