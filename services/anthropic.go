@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -22,10 +23,10 @@ func NewAnthropicService(apiKey string) *AnthropicService {
 
 func (a *AnthropicService) GenerateText(keywords []string, text string) (string, error) {
     // Create a simple prompt
-    prompt := fmt.Sprintf(
-        "Please integrate these keywords %v into the following text: %s",
-        keywords, text,
-    )
+    prompt := constructPrompt(map[string]string{
+        "ProductDescription": text,
+        "Keywords":           strings.Join(keywords, ", "),
+    })
 
     message, err := a.client.Messages.New(context.TODO(), anthropic.MessageNewParams{
 		Model:     anthropic.F(anthropic.ModelClaude3_5SonnetLatest),

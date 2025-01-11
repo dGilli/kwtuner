@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+    services.SetPrompt(prompt())
     services.RegisterService("openai", services.NewOpenAIService(""))
     services.RegisterService("anthropic", services.NewAnthropicService(""))
 }

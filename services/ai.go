@@ -1,6 +1,9 @@
 package services
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 var (
     registry = make(map[string]AIService)
@@ -22,5 +25,21 @@ func GetService(name string) (AIService, bool) {
     defer mu.RUnlock()
     s, ok := registry[name]
     return s, ok
+}
+
+var (
+    Prompt string
+)
+
+func SetPrompt(prompt string) {
+    Prompt = prompt
+}
+
+func constructPrompt(d map[string]string) string {
+    var p = Prompt
+	p = strings.ReplaceAll(p, "{ProductDescription}", d["ProductDescription"])
+	p = strings.ReplaceAll(p, "{Keywords}", d["Keywords"])
+
+    return p
 }
 
