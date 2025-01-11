@@ -5,49 +5,72 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dgilli/kwtuner/services"
+	"github.com/dgilli/kwtuner/views/home"
 )
 
-type AIRequest struct {
+type GeneratePayload struct {
     APIKey   string   `json:"apikey"`
     Service  string   `json:"service"`
     Keywords []string `json:"keywords"`
     Text     string   `json:"text"`
 }
 
-func HandleGenerateIndex(w http.ResponseWriter, r *http.Request) error {
+func HandleGenerate(w http.ResponseWriter, r *http.Request) error {
     if r.Method != http.MethodPost {
         http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
         return fmt.Errorf("invalid method: %s", r.Method)
     }
 
-    var req AIRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid JSON", http.StatusBadRequest)
-        return err
+    var p GeneratePayload
+
+    contentType := r.Header.Get("Content-Type")
+    if strings.Contains(contentType, "application/json") {
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+            http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return err
+		}
+    } else {
+        if err := r.ParseForm(); err != nil {
+            http.Error(w, "Unable to parse form", http.StatusBadRequest)
+            return err
+        }
+        p.APIKey = r.FormValue("apikey")
+        p.Service = r.FormValue("service")
+        p.Keywords = strings.Split(r.FormValue("keywords"), ", ")
+        p.Text = r.FormValue("text")
     }
 
-    service, ok := services.GetService(req.Service)
+    service, ok := services.GetService(p.Service)
     if !ok {
-        err := errors.New("AI error, service not found")
+        err := errors.New(fmt.Sprintf("service not found: %s", p.Service))
         http.Error(w, fmt.Sprintf("AI error: %v", err), http.StatusInternalServerError)
         return err
     }
 
-    if req.APIKey != "" && req.Service == "openai" {
-        service = services.NewOpenAIService(req.APIKey)
-    }
-    if req.APIKey != "" && req.Service == "anthropic" {
-        service = services.NewAnthropicService(req.APIKey)
+    if p.APIKey != "" && p.Service == "openai" {
+        service = services.NewOpenAIService(p.APIKey)
+    } else if p.APIKey != "" && p.Service == "claude" {
+        service = services.NewAnthropicService(p.APIKey)
+    } else {
+        err := errors.New("api key not set")
+        http.Error(w, fmt.Sprintf("AI error: %v", err), http.StatusInternalServerError)
+        return err
     }
 
-    generatedText, err := service.GenerateText(req.Keywords, req.Text)
+    generated, err := service.GenerateText(p.Keywords, p.Text)
     if err != nil {
         http.Error(w, fmt.Sprintf("AI error: %v", err), http.StatusInternalServerError)
         return err
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    return json.NewEncoder(w).Encode(map[string]string{"response": generatedText})
+    accept := r.Header.Get("Accept")
+    if strings.Contains(accept, "application/json") {
+        w.Header().Set("Content-Type", "application/json")
+        return json.NewEncoder(w).Encode(map[string]string{"response": generated})
+    } else {
+	    return Render(w, r, home.Result(generated))
+    }
 }

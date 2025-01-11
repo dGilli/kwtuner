@@ -16,7 +16,8 @@ func init() {
 }
 
 func main() {
-    http.HandleFunc("/generate", handlers.New(handlers.HandleGenerateIndex))
+    http.HandleFunc("/", handlers.New(handlers.HandleHome))
+    http.HandleFunc("/generate", handlers.New(handlers.HandleGenerate))
     fmt.Println("Starting server on port 8080...")
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
