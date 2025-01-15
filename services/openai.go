@@ -1,10 +1,11 @@
 package services
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
+	"strings"
 
-    openai "github.com/sashabaranov/go-openai"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 // OpenAIService is a simple struct for storing OpenAI-specific config.
@@ -24,7 +25,10 @@ func NewOpenAIService(apiKey string) *OpenAIService {
 // GenerateText calls the OpenAI API, passing in your text and keywords.
 // This is just a placeholder - adapt as needed to your real prompts.
 func (o *OpenAIService) GenerateText(keywords []string, text string) (string, error) {
-    prompt := fmt.Sprintf("Integrate these keywords %v into the text: %s", keywords, text)
+    prompt := constructPrompt(map[string]string{
+        "ProductDescription": text,
+        "Keywords":           strings.Join(keywords, ", "),
+    })
 
     resp, err := o.client.CreateChatCompletion(
         context.Background(),
