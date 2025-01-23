@@ -50,9 +50,13 @@ func (o *OpenAIService) GenerateText(keywords []string, text string) (string, er
         return "", err
     }
 
-    // Return the model's reply
+	content, err := extractContent(resp.Choices[0].Message.Content, "rewritten_description")
+	if err != nil {
+		return "", err
+	}
+
     if len(resp.Choices) > 0 {
-        return resp.Choices[0].Message.Content, nil
+        return content, nil
     }
 
     return "", fmt.Errorf("no content in OpenAI response")

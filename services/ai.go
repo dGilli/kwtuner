@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -41,5 +42,27 @@ func constructPrompt(d map[string]string) string {
 	p = strings.ReplaceAll(p, "{Keywords}", d["Keywords"])
 
     return p
+}
+
+func extractContent(htmlContent, tagName string) (string, error) {
+	openTag := fmt.Sprintf("<%s>", tagName)
+	closeTag := fmt.Sprintf("</%s>", tagName)
+
+	// Find the opening and closing tag positions
+	startIdx := strings.Index(htmlContent, openTag)
+	if startIdx == -1 {
+		return "", fmt.Errorf("opening tag <%s> not found", tagName)
+	}
+	endIdx := strings.Index(htmlContent, closeTag)
+	if endIdx == -1 {
+		return "", fmt.Errorf("closing tag </%s> not found", tagName)
+	}
+
+	startIdx += len(openTag) // Move index to the end of the opening tag
+	if startIdx >= endIdx {
+		return "", fmt.Errorf("invalid content for <%s>", tagName)
+	}
+
+	return htmlContent[startIdx:endIdx], nil
 }
 

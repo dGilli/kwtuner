@@ -69,7 +69,7 @@ func HandleGenerate(w http.ResponseWriter, r *http.Request) error {
     accept := r.Header.Get("Accept")
     if strings.Contains(accept, "application/json") {
         w.Header().Set("Content-Type", "application/json")
-        return json.NewEncoder(w).Encode(map[string]string{"response": generated})
+        return json.NewEncoder(w).Encode(map[string]string{"response": strings.TrimSpace(generated)})
     } else {
 	    return Render(w, r, home.Result(generated))
     }

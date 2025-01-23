@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -31,7 +30,7 @@ func (a *AnthropicService) GenerateText(keywords []string, text string) (string,
     message, err := a.client.Messages.New(context.TODO(), anthropic.MessageNewParams{
 		Model:     anthropic.F(anthropic.ModelClaude3_5SonnetLatest),
 		MaxTokens: anthropic.F(int64(1024)),
-		Messages: anthropic.F([]anthropic.MessageParam{
+		Messages:  anthropic.F([]anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		}),
 	})
@@ -39,6 +38,11 @@ func (a *AnthropicService) GenerateText(keywords []string, text string) (string,
         return "", err
 	}
 
-    return fmt.Sprintf("%+v\n", message.Content), nil
+	content, err := extractContent(message.Content[0].Text, "rewritten_description")
+	if err != nil {
+		return "", err
+	}
+
+    return content, nil
 }
 
